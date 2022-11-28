@@ -1,13 +1,15 @@
 <html>
 	<h1> Image Tagger </h1>
-	<p> tensorflow.js client side image tagger </p>
-	<p> <a href="https://github.com/Thessal/image-tagger">https://github.com/Thessal/image-tagger</a> </p>
+	<p> tensorflow.js client side image tagger <a style="color:gray;" href="https://github.com/Thessal/image-tagger">(link)</a> </p>
 
-	<input type="file" id="image-input" accept="image/jpeg, image/png, image/jpg">
+	<div>
+		<h3> Select file </h3>
+		<input style="background-color:black;color:yellow;" type="file" id="image-input" accept="image/jpeg, image/png, image/jpg">
+	</div>				
 	<div>
 		<canvas id="canvas-image" style="width: 299px; height: 299px; border: 1px solid black;"/>
 	</div>
-	<div>
+	<div style="width:300px">
 		<p id="status"></p>
 	</div>
 	<div id="result-div"></div>

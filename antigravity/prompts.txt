@@ -1,0 +1,47 @@
+##################
+# Initial Prompt #
+##################
+# Scale-Free Network Stability & Phase Transitions
+
+This repository contains an interactive simulation of **Structural Phase Transitions** within complex networks.
+
+## 1. The Research Context
+
+While these networks are resilient to random shocks, they are uniquely vulnerable to **targeted attacks**. This simulation visualizes the **structural vulnerability** (specifically, **hub-centric fragility**) of preferential attachment networks: the moment when removing a critical hub triggers a global collapse of the **Giant Component ($P_\\infty$)**.
+
+## 2. Interactive Simulation
+
+The included `index.html` (hosted via GitHub Pages) provides a real-time dashboard to explore these dynamics:
+
+* **Engine:** Barabási–Albert (BA) model with tunable preferential attachment.
+* **Attack Vector:** Sequential removal of nodes based on **Degree Centrality**.
+* **Metrics:** Real-time tracking of the phase transition threshold  and log-log degree distribution plots.
+
+## 3. The Workflow
+
+1. **Mathematical Derivation:** Translating network theory into simulation logic.
+2. **Code Synthesis:** Generating D3.js visualizations.
+3. **Validation:** Automated error-checking for look-ahead bias and topological consistency.
+
+##################
+# First Feedback #
+##################
+Check out README.md.
+Implement them, using GPT-OSS:120b via webui or ollama.
+You can access the webui at the current open browser tabs : @beautifulMention 
+
+###################
+# Second Feedback #
+###################
+1. Display the governing equation of BA model, and explain what is m or other variable in the equations, on the webpage.
+2. Display the governing equation of targeted attack, and explain what is m or other variable in the equations, on the webpage.
+3. The graph becomes static once m becomes one. Explain why this happens.
+4. Targeted Attack button is not working. Fix it.
+5. Show degree distribution of the graph on the webpage. 
+
+##################
+# Third Feedback #
+##################
+1. Read paper from https://www.nature.com/articles/35019019 , or https://www.nature.com/articles/35019019.pdf . Consider adding additional charts such as cluster size distrubiton, to visualize network failure. 
+2. Add more sliders or combobox for Erdős–Rényi network with p < 0.05.
+3. Log-binning is not correct, and the label for that explains the meaning of the axis is missing. (probability density, degree, etc.). Refer this webpage for proper log-binning for power law distribution : https://github.com/h2jo/log_binning/blob/master/main.ipynb

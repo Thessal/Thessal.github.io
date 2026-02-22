@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Scale-Free Network Stability & Phase Transitions</title>
+    <!-- MathJax removed to support offline/local environments -->
+    <style>
+        body {
+            margin: 0;
+            background: #0d0d0d;
+            color: #e0e0e0;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow: hidden;
+        }
+
+        #header {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 2;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: #00ffcc;
+            text-shadow: 0 0 8px #00ffcc;
+        }
+
+        #controls {
+            position: absolute;
+            top: 60px;
+            left: 10px;
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px #000;
+            z-index: 2;
+            width: 320px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #controls label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        #controls input[type=range] {
+            width: 100%;
+        }
+
+        .panel-box {
+            background: #222;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border-left: 3px solid #00ffcc;
+        }
+
+        .panel-box h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1rem;
+            color: #0ff;
+        }
+
+        #metrics {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px #000;
+            z-index: 2;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        #metrics div {
+            margin: 4px 0;
+            font-size: 0.9rem;
+        }
+
+        #attackBtn {
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            background: #ff0066;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 0 6px #ff0066;
+            transition: background 0.2s;
+        }
+
+        #attackBtn:hover {
+            background: #ff3385;
+        }
+
+        #networkSvg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #charts-container {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 2;
+        }
+
+        .bottom-chart {
+            background: #1a1a1a;
+            padding: 8px;
+            border-radius: 6px;
+            box-shadow: 0 0 8px #000;
+        }
+
+        .chart-wrapper {
+            position: relative;
+        }
+
+        .chart-title {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #0ff;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .action-btn {
+            margin-top: 15px;
+            flex: 1;
+            padding: 10px;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #attackBtn {
+            background: #ff0066;
+            box-shadow: 0 0 6px #ff0066;
+        }
+
+        #attackBtn:hover {
+            background: #ff3385;
+        }
+
+        #failBtn {
+            background: #ffaa00;
+            box-shadow: 0 0 6px #ffaa00;
+        }
+
+        #failBtn:hover {
+            background: #ffcc33;
+        }
+
+        .node {
+            stroke: #0d0d0d;
+            stroke-width: 1.2px;
+        }
+
+        .link {
+            stroke: #444;
+            stroke-opacity: 0.6;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="header">
+        <h1>Scale-Free Network Stability & Phase Transitions</h1>
+    </div>
+
+    <div id="controls">
+        <label for="nSlider">Total Nodes (N): <span id="nVal">100</span></label>
+        <input id="nSlider" type="range" min="50" max="300" step="10" value="100">
+
+        <label for="typeSelect" style="margin-top: 10px;">Network Type:</label>
+        <select id="typeSelect"
+            style="width:100%; margin-bottom: 10px; padding: 5px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px;">
+            <option value="BA">Scale-Free (Barabási-Albert)</option>
+            <option value="ER">Exponential (Erdős–Rényi)</option>
+        </select>
+
+        <div id="baControls">
+            <label for="mSlider">Edges per new node (m): <span id="mVal">3</span></label>
+            <input id="mSlider" type="range" min="1" max="10" value="3">
+
+            <div class="panel-box">
+                <h3>BA Model Equation</h3>
+                <p>The Barabási-Albert model uses preferential attachment. The probability &Pi;(k<sub>i</sub>) that a
+                    new node
+                    connects to existing node i is:</p>
+                <div
+                    style="text-align:center; font-size: 1.1rem; margin: 8px 0; font-family: 'Courier New', monospace; color: #fff;">
+                    &Pi;(k<sub>i</sub>) = k<sub>i</sub> / &Sigma;<sub>j</sub>(k<sub>j</sub>)
+                </div>
+                <p>Where k<sub>i</sub> is the degree of node i. m represents the number of links every new node forms.
+                    Higher
+                    m creates denser meshes.</p>
+            </div>
+
+            <div class="panel-box" id="m1-explanation" style="display: none; border-left-color: #ffaa00;">
+                <h3>Why is the graph static? (m=1)</h3>
+                <p>When m=1, the network forms a <strong>tree structure</strong> without cycles. Because new nodes only
+                    ever attach to a single existing node, there are no competing topological forces pulling nodes into
+                    a
+                    dense, dynamic cluster. This often results in isolated branched structures that rapidly fragment
+                    upon
+                    attack.</p>
+            </div>
+        </div>
+
+        <div id="erControls" style="display: none;">
+            <label for="pSlider">Connection Prob (p): <span id="pVal">0.020</span></label>
+            <input id="pSlider" type="range" min="0.001" max="0.05" step="0.001" value="0.020">
+
+            <div class="panel-box" style="border-left-color: #aa00ff;">
+                <h3>ER Model (Exponential)</h3>
+                <p>The Erdős–Rényi model connects pairs of nodes randomly. Any two nodes are connected with a fixed
+                    probability p.</p>
+                <p>This generates a homogenous degree distribution that decays exponentially for k &Gt;
+                    &langle;k&rangle;.</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button id="attackBtn" class="action-btn">Targeted Attack</button>
+            <button id="failBtn" class="action-btn">Random Failure</button>
+        </div>
+        <div class="panel-box" style="border-left-color: #ff0066;">
+            <h3>Targeted Attack</h3>
+            <p>Removes the highly-connected hubs. The target node v satisfies:</p>
+            <div
+                style="text-align:center; font-size: 1.1rem; margin: 8px 0; font-family: 'Courier New', monospace; color: #fff;">
+                k<sub>v</sub> = max<sub>i</sub>(k<sub>i</sub>)
+            </div>
+            <p>Scale-free networks are robust against random failures but highly fragile to targeted attacks on hubs
+                (m doesn't protect against this if hubs fall).</p>
+        </div>
+    </div>
+
+    <div id="metrics">
+        <div>Nodes: <span id="nodeCnt">0</span></div>
+        <div>Edges: <span id="edgeCnt">0</span></div>
+        <div>Giant Component: <span id="giantSize">0</span></div>
+    </div>
+
+    <svg id="networkSvg"></svg>
+
+    <div id="charts-container">
+        <div class="chart-wrapper">
+            <div class="chart-title">Log-Log Degree Distribution</div>
+            <svg id="degChart" class="bottom-chart" width="300" height="200"></svg>
+        </div>
+        <div class="chart-wrapper">
+            <div class="chart-title">Network Fragmentation (S & &lang;s&rang;)</div>
+            <svg id="fragChart" class="bottom-chart" width="300" height="200"></svg>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        /* ====================== GLOBALS ====================== */
+        let nParam = 100;            // total nodes to generate
+        let mParam = 3;              // edges per new node (BA)
+        let pParam = 0.020;          // connection probability (ER)
+        let networkType = 'BA';      // 'BA' or 'ER'
+        let nodes = [], links = [];
+        let fragData = [];           // Array to store fragmentation data points over time
+        let removed = new Set();     // ids of removed nodes
+
+        /* ====================== UI ====================== */
+        const nSlider = d3.select('#nSlider');
+        const nValSpan = d3.select('#nVal');
+        const typeSelect = d3.select('#typeSelect');
+        const baControls = d3.select('#baControls');
+        const erControls = d3.select('#erControls');
+        const mSlider = d3.select('#mSlider');
+        const mValSpan = d3.select('#mVal');
+        const pSlider = d3.select('#pSlider');
+        const pValSpan = d3.select('#pVal');
+        const m1Exp = document.getElementById('m1-explanation');
+
+        nSlider.on('input', () => {
+            nParam = +nSlider.property('value');
+            nValSpan.text(nParam);
+            resetNetwork();
+        });
+
+        typeSelect.on('change', () => {
+            networkType = typeSelect.property('value');
+            if (networkType === 'BA') {
+                baControls.style('display', 'block');
+                erControls.style('display', 'none');
+            } else {
+                baControls.style('display', 'none');
+                erControls.style('display', 'block');
+            }
+            resetNetwork();
+        });
+
+        mSlider.on('input', () => {
+            mParam = +mSlider.property('value');
+            mValSpan.text(mParam);
+            if (mParam === 1) {
+                m1Exp.style.display = 'block';
+            } else {
+                m1Exp.style.display = 'none';
+            }
+            resetNetwork();
+        });
+
+        pSlider.on('input', () => {
+            pParam = +pSlider.property('value');
+            pValSpan.text(pParam.toFixed(3));
+            resetNetwork();
+        });
+
+        /* ====================== NETWORK GENERATOR ====================== */
+        function generateBA(N, m) {
+            // start with m0 = max(m, 2) to ensure at least some initial structure if m=1
+            const m0 = Math.max(m, 2);
+            let nList = d3.range(m0).map(i => ({ id: i, degree: 0 }));
+            let lList = [];
+            for (let i = 0; i < m0; i++) {
+                for (let j = i + 1; j < m0; j++) {
+                    lList.push({ source: i, target: j });
+                }
+            }
+            let degreeList = [];
+            nList.forEach(d => { for (let k = 0; k < m0 - 1; k++) degreeList.push(d.id); });
+
+            for (let newId = m0; newId < N; newId++) {
+                const targets = new Set();
+                while (targets.size < m) {
+                    if (degreeList.length === 0) break;
+                    const randIdx = Math.floor(Math.random() * degreeList.length);
+                    const target = degreeList[randIdx];
+                    targets.add(target);
+                }
+                targets.forEach(t => {
+                    lList.push({ source: newId, target: t });
+                });
+                const newDeg = targets.size;
+                for (let k = 0; k < newDeg; k++) degreeList.push(newId);
+                targets.forEach(t => {
+                    degreeList.push(t);
+                });
+                nList.push({ id: newId, degree: 0 });
+            }
+            return { nodes: nList, links: lList };
+        }
+
+        function generateER(N, p) {
+            let nList = d3.range(N).map(i => ({ id: i, degree: 0 }));
+            let lList = [];
+            for (let i = 0; i < N; i++) {
+                for (let j = i + 1; j < N; j++) {
+                    if (Math.random() < p) {
+                        lList.push({ source: i, target: j });
+                    }
+                }
+            }
+            return { nodes: nList, links: lList };
+        }
+
+        /* ====================== METRICS & CLUSTERS ====================== */
+        function getClusters(nodesArr, linksArr) {
+            const map = new Map(nodesArr.map(n => [n.id, []]));
+            linksArr.forEach(l => {
+                let src = typeof l.source === 'object' ? l.source.id : l.source;
+                let tgt = typeof l.target === 'object' ? l.target.id : l.target;
+                if (map.has(src) && map.has(tgt)) {
+                    map.get(src).push(tgt);
+                    map.get(tgt).push(src);
+                }
+            });
+            const visited = new Set();
+            let clusters = [];
+            for (let n of nodesArr) {
+                if (visited.has(n.id)) continue;
+                let stack = [n.id];
+                let size = 0;
+                visited.add(n.id);
+                while (stack.length) {
+                    const cur = stack.pop();
+                    size++;
+                    map.get(cur).forEach(nb => {
+                        if (!visited.has(nb)) {
+                            visited.add(nb);
+                            stack.push(nb);
+                        }
+                    });
+                }
+                clusters.push(size);
+            }
+            return clusters.sort((a, b) => b - a);
+        }
+
+        function recordFragmentation() {
+            const visibleNodes = nodes.filter(n => !removed.has(n.id));
+            const visibleLinks = links.filter(l => {
+                let s = typeof l.source === 'object' ? l.source.id : l.source;
+                let t = typeof l.target === 'object' ? l.target.id : l.target;
+                return !removed.has(s) && !removed.has(t);
+            });
+
+            const clusters = getClusters(visibleNodes, visibleLinks);
+            const largestSize = clusters.length > 0 ? clusters[0] : 0;
+            const S = nParam > 0 ? largestSize / nParam : 0;
+
+            let isoSum = 0;
+            for (let i = 1; i < clusters.length; i++) {
+                isoSum += clusters[i];
+            }
+            const avgS = clusters.length > 1 ? isoSum / (clusters.length - 1) : 0;
+
+            const f = nParam > 0 ? removed.size / nParam : 0;
+            fragData.push({ f, S, s: avgS });
+            updateFragChart();
+        }
+
+        function updateFragChart() {
+            const chart = d3.select('#fragChart');
+            const w = +chart.attr('width'), h = +chart.attr('height');
+            chart.selectAll('*').remove();
+
+            if (fragData.length === 0) return;
+
+            const x = d3.scaleLinear().domain([0, 1]).range([45, w - 40]);
+            const yS = d3.scaleLinear().domain([0, 1]).range([h - 35, 15]);
+            const maxS_iso = d3.max(fragData, d => d.s) || 1;
+            const yIso = d3.scaleLinear().domain([0, Math.max(2, maxS_iso)]).range([h - 35, 15]);
+
+            const xAxis = g => g.attr('transform', `translate(0,${h - 35})`).call(d3.axisBottom(x).ticks(5));
+            const yAxisS = g => g.attr('transform', `translate(45,0)`).call(d3.axisLeft(yS).ticks(5));
+            const yAxisIso = g => g.attr('transform', `translate(${w - 40},0)`).call(d3.axisRight(yIso).ticks(5));
+
+            chart.append('g').call(xAxis);
+            chart.append('g').call(yAxisS);
+            chart.append('g').call(yAxisIso);
+
+            chart.append("text").attr("x", w / 2).attr("y", h - 5)
+                .attr("text-anchor", "middle").style("fill", "#0ff").style("font-size", "10px").text("Fraction removed (f)");
+
+            chart.append("text").attr("transform", "rotate(-90)").attr("y", 15).attr("x", -h / 2)
+                .attr("text-anchor", "middle").style("fill", "#ff0066").style("font-size", "10px").text("S (Largest Cluster)");
+
+            chart.append("text").attr("transform", "rotate(90)").attr("y", -w + 10).attr("x", h / 2)
+                .attr("text-anchor", "middle").style("fill", "#00ffcc").style("font-size", "10px").text("<s\> (Avg Isolated)");
+
+            const lineS = d3.line().x(d => x(d.f)).y(d => yS(d.S));
+            chart.append("path").datum(fragData).attr("fill", "none").attr("stroke", "#ff0066").attr("stroke-width", 2).attr("d", lineS);
+
+            chart.append('g').selectAll('circle.S').data(fragData).enter()
+                .append('circle').attr('class', 'S').attr('cx', d => x(d.f)).attr('cy', d => yS(d.S)).attr('r', 2).attr('fill', '#ff0066');
+
+            const lineIso = d3.line().x(d => x(d.f)).y(d => yIso(d.s));
+            chart.append("path").datum(fragData).attr("fill", "none").attr("stroke", "#00ffcc").attr("stroke-width", 2).attr("d", lineIso);
+
+            chart.append('g').selectAll('circle.iso').data(fragData).enter()
+                .append('circle').attr('class', 'iso').attr('cx', d => x(d.f)).attr('cy', d => yIso(d.s)).attr('r', 2).attr('fill', '#00ffcc');
+        }
+
+        /* ====================== DEGREE DISTRIBUTION CHART ====================== */
+        function updateDegreeChart() {
+            const chart = d3.select('#degChart');
+            const w = +chart.attr('width'), h = +chart.attr('height');
+            chart.selectAll('*').remove();
+
+            const visibleNodes = nodes.filter(n => !removed.has(n.id));
+            const visibleLinks = links.filter(l =>
+                !removed.has(typeof l.source === 'object' ? l.source.id : l.source) &&
+                !removed.has(typeof l.target === 'object' ? l.target.id : l.target)
+            );
+
+            const degCount = {};
+            visibleNodes.forEach(n => { degCount[n.id] = 0; });
+            visibleLinks.forEach(l => {
+                let s = typeof l.source === 'object' ? l.source.id : l.source;
+                let t = typeof l.target === 'object' ? l.target.id : l.target;
+                degCount[s] = (degCount[s] || 0) + 1;
+                degCount[t] = (degCount[t] || 0) + 1;
+            });
+
+            const freq = {};
+            // total node count for probability density
+            const nTotal = visibleNodes.length || 1;
+            Object.values(degCount).forEach(d => {
+                if (d === 0) return; // ignore isolated for log scale or map to 1
+                // convert to density roughly: freq[d] = count.
+                freq[d] = (freq[d] || 0) + 1;
+            });
+
+            // Log binning with mix
+            const binsize = 0.1;
+            const bincross = 10;
+            const distr_bin = {};
+            const bin_mix = {};
+
+            const sortedKeys = Object.keys(freq).map(Number).sort((a, b) => a - b);
+            if (sortedKeys.length === 0) return;
+
+            let minX = sortedKeys[0];
+            let binstart = Math.log(minX);
+            let b0 = binstart;
+            let b1 = b0 + binsize;
+            let bc = b0 + binsize * 0.5;
+
+            sortedKeys.forEach(x => {
+                while (Math.log(x) >= b1) {
+                    b0 += binsize;
+                    b1 = b0 + binsize;
+                    bc = b0 + binsize * 0.5;
+                }
+                const xc = Math.exp(bc);
+                distr_bin[xc] = (distr_bin[xc] || 0) + (freq[x] / nTotal); // Normalized by total nodes so it's a true probability
+
+                if (x < bincross) {
+                    bin_mix[xc] = (bin_mix[xc] || 0) + 1; // Number of unique values hit in this bin
+                } else {
+                    bin_mix[xc] = Math.exp(b1) - Math.exp(b0); // Period size
+                }
+            });
+
+            const data = Object.entries(distr_bin).map(([k, v]) => {
+                const norm = bin_mix[k] || 1;
+                return { k: +k, v: v / norm };
+            });
+
+            if (data.length === 0) return;
+
+            // Use d3.max safely, ensure domains don't crash
+            const maxK = d3.max(data, d => d.k) || 1;
+            const maxV = d3.max(data, d => d.v) || 1;
+            const minV = d3.min(data, d => d.v) || 1;
+
+            const x = d3.scaleLog().domain([1, Math.max(2, maxK)]).range([45, w - 15]);
+            const y = d3.scaleLog().domain([minV, Math.max(2, maxV)]).range([h - 35, 15]);
+
+            const xAxis = g => g.attr('transform', `translate(0,${h - 35})`).call(d3.axisBottom(x).ticks(5, "~s"));
+            const yAxis = g => g.attr('transform', `translate(45,0)`).call(d3.axisLeft(y).ticks(5, "~s"));
+
+            chart.append('g').call(xAxis);
+            chart.append('g').call(yAxis);
+
+            // Axis labels
+            chart.append("text")
+                .attr("text-anchor", "middle")
+                .attr("x", w / 2)
+                .attr("y", h - 5)
+                .style("fill", "#0ff")
+                .style("font-size", "10px")
+                .text("Degree (k)");
+
+            chart.append("text")
+                .attr("text-anchor", "middle")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 15)
+                .attr("x", -h / 2)
+                .style("fill", "#0ff")
+                .style("font-size", "10px")
+                .text("Probability Density P(k)");
+
+            chart.append('g')
+                .selectAll('circle')
+                .data(data)
+                .enter()
+                .append('circle')
+                .attr('cx', d => x(d.k))
+                .attr('cy', d => y(d.v))
+                .attr('r', 5)
+                .attr('fill', '#00ffcc')
+                .attr('stroke', '#0d0d0d')
+                .attr('stroke-width', 1);
+        }
+
+        /* ====================== D3 NETWORK ====================== */
+        const svg = d3.select('#networkSvg');
+        const width = window.innerWidth, height = window.innerHeight;
+
+        const linkGroup = svg.append('g').attr('class', 'links');
+        const nodeGroup = svg.append('g').attr('class', 'nodes');
+
+        let simulation = d3.forceSimulation()
+            .force('link', d3.forceLink().id(d => d.id).distance(mParam === 1 ? 30 : 70))
+            .force('charge', d3.forceManyBody().strength(mParam === 1 ? -100 : -200))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide(15));
+
+        function resetNetwork() {
+            removed.clear();
+            fragData = [];           // reset tracking
+            const gen = networkType === 'BA' ? generateBA(nParam, mParam) : generateER(nParam, pParam);
+            nodes = gen.nodes;
+            links = gen.links;
+
+            // adjust forces based on mode
+            if (networkType === 'BA') {
+                simulation.force('link').distance(mParam === 1 ? 30 : 70);
+                simulation.force('charge').strength(mParam === 1 ? -100 : -200);
+            } else {
+                simulation.force('link').distance(50);
+                simulation.force('charge').strength(-150);
+            }
+
+            updateGraph();
+            recordFragmentation();
+        }
+        // Initialization
+        if (mParam === 1) m1Exp.style.display = 'block';
+        resetNetwork();
+
+        function updateGraph() {
+            const visibleNodes = nodes.filter(n => !removed.has(n.id));
+            const visibleLinks = links.filter(l => {
+                let s = typeof l.source === 'object' ? l.source.id : l.source;
+                let t = typeof l.target === 'object' ? l.target.id : l.target;
+                return !removed.has(s) && !removed.has(t);
+            });
+
+            const degreeMap = {};
+            visibleNodes.forEach(n => degreeMap[n.id] = 0);
+            visibleLinks.forEach(l => {
+                let s = typeof l.source === 'object' ? l.source.id : l.source;
+                let t = typeof l.target === 'object' ? l.target.id : l.target;
+                degreeMap[s] = (degreeMap[s] || 0) + 1;
+                degreeMap[t] = (degreeMap[t] || 0) + 1;
+            });
+
+            // Update data structures so simulation knows their degrees
+            visibleNodes.forEach(n => n.degree = degreeMap[n.id]);
+
+            const maxDeg = d3.max(Object.values(degreeMap)) || 1;
+            const color = d3.scaleSequential(d3.interpolateRainbow).domain([0, maxDeg]);
+
+            const linkSel = linkGroup.selectAll('line')
+                .data(visibleLinks, d => {
+                    let s = typeof d.source === 'object' ? d.source.id : d.source;
+                    let t = typeof d.target === 'object' ? d.target.id : d.target;
+                    return `${s}-${t}`;
+                });
+
+            linkSel.enter()
+                .append('line')
+                .attr('class', 'link')
+                .attr('stroke-width', 1)
+                .merge(linkSel);
+
+            linkSel.exit().remove();
+
+            const nodeSel = nodeGroup.selectAll('circle')
+                .data(visibleNodes, d => d.id);
+
+            nodeSel.enter()
+                .append('circle')
+                .attr('class', 'node')
+                .attr('r', d => 5 + Math.sqrt(degreeMap[d.id] || 0) * 2)
+                .call(drag(simulation))
+                .merge(nodeSel)
+                .attr('fill', d => color(degreeMap[d.id] || 0))
+                .attr('r', d => 5 + Math.sqrt(degreeMap[d.id] || 0) * 2);
+
+            nodeSel.append("title")
+                .text(d => `Node ${d.id}\nDegree: ${d.degree}`);
+
+            nodeSel.exit().remove();
+
+            simulation.nodes(visibleNodes).on('tick', ticked);
+            simulation.force('link').links(visibleLinks);
+            simulation.alpha(1).restart();
+
+            function ticked() {
+                linkGroup.selectAll('line')
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                nodeGroup.selectAll('circle')
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+            }
+
+            d3.select('#nodeCnt').text(visibleNodes.length);
+            d3.select('#edgeCnt').text(visibleLinks.length);
+            const clusters = getClusters(visibleNodes, visibleLinks);
+            const giantSize = clusters.length > 0 ? clusters[0] : 0;
+            d3.select('#giantSize').text(giantSize);
+
+            updateDegreeChart();
+        }
+
+        function drag(sim) {
+            function dragstarted(event, d) {
+                if (!event.active) sim.alphaTarget(0.3).restart();
+                d.fx = d.x; d.fy = d.y;
+            }
+            function dragged(event, d) {
+                d.fx = event.x; d.fy = event.y;
+            }
+            function dragended(event, d) {
+                if (!event.active) sim.alphaTarget(0);
+                d.fx = null; d.fy = null;
+            }
+            return d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended);
+        }
+
+        d3.select('#attackBtn').on('click', () => {
+            // Calculate current degrees of VISIBLE nodes using visible links
+            const deg = {};
+            const visibleNodes = nodes.filter(n => !removed.has(n.id));
+            visibleNodes.forEach(n => deg[n.id] = 0);
+
+            links.forEach(l => {
+                let s = typeof l.source === 'object' ? l.source.id : l.source;
+                let t = typeof l.target === 'object' ? l.target.id : l.target;
+                if (removed.has(s) || removed.has(t)) return;
+                deg[s] = (deg[s] || 0) + 1;
+                deg[t] = (deg[t] || 0) + 1;
+            });
+
+            let maxNode = null, maxDeg = -1;
+            visibleNodes.forEach(n => {
+                const d = deg[n.id] || 0;
+                if (d > maxDeg) {
+                    maxDeg = d; maxNode = n.id;
+                }
+            });
+
+            if (maxNode !== null) {
+                removed.add(maxNode);
+                updateGraph();
+                recordFragmentation();
+            }
+        });
+
+        d3.select('#failBtn').on('click', () => {
+            const visibleNodes = nodes.filter(n => !removed.has(n.id));
+            if (visibleNodes.length === 0) return;
+            const randIdx = Math.floor(Math.random() * visibleNodes.length);
+            removed.add(visibleNodes[randIdx].id);
+            updateGraph();
+            recordFragmentation();
+        });
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth, h = window.innerHeight;
+            simulation.force('center', d3.forceCenter(w / 2, h / 2));
+            simulation.alpha(0.5).restart();
+        });
+    </script>
+</body>
+
+</html>
